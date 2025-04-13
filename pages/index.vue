@@ -1,49 +1,34 @@
 <script lang="tsx" setup>
-import { ref, computed, isRef } from "vue";
+import { ref } from "vue";
 
 // Parent state
 const parentCount = ref(0);
 const parentMessage = ref("Parent message");
-
-// Child component with proper value access
-const CounterChild = (props: {
-  count: { value: number };
-  message: string;
-  onIncrement: (newValue: number) => void;
-}) => {
-  // Create writable computed property
-  const refCount = toRef(props.count, "value");
-  const localCount = computed({
-    get: () => {
-      console.log("Getting count:", refCount);
-      return refCount;
-    },
+console.log("Is parentCount a ref?", isRef(parentCount));
+// Child component with callback
+const CounterChild = (props) => {
+  const { count, message } = toRefs(props);
+  const computedCount = computed({
+    get: () => props.count,
     set: (val) => {
-      console.log("Setting count to:", val);
-      props.onIncrement(val);
+      console.log("Setting new value:", val);
+      props.count = val;
     },
   });
 
-  // Proper way to log computed ref value
-  console.log("Current count value:", localCount.value);
-  console.log("Is localCount reactive?", isRef(localCount));
-
+  const increment = () => {
+    computedCount.value++; // This triggers the setter
+  };
   return (
     <div class="child">
-      <h3>{props.message}</h3>
-      <p>Current count: {localCount.value.value}</p>
-      <button
-        onClick={() => {
-          localCount.value++;
-          console.log("After increment:", localCount.value);
-        }}
-      >
-        Increment from Child
-      </button>
+      <h3>{message.value}</h3>
+      <p>Current count: {computedCount.value}</p>
+      <button onClick={increment}>Increment from Child</button>
     </div>
   );
 };
 
+// Another child with callback
 const StatusChild = (props: {
   status: string;
   message: string;
@@ -59,7 +44,7 @@ const StatusChild = (props: {
 
 <template>
   <div class="container">
-    <h1>Final Working Solution</h1>
+    <h1>Simplified Two-Way Communication</h1>
 
     <!-- Parent controls -->
     <div class="parent-controls">
@@ -67,27 +52,15 @@ const StatusChild = (props: {
       <input v-model="parentMessage" placeholder="Type to update child" />
     </div>
 
-    <!-- Child components -->
+    <!-- Child components with callbacks -->
     <counter-child
       :count="parentCount"
       :message="`Parent says: ${parentMessage}`"
-      :on-increment="
-        (newValue) => {
-          console.log('Parent updating count to:', newValue);
-          parentCount.value = newValue;
-        }
-      "
     />
 
     <status-child
       :status="parentCount > 5 ? 'High' : 'Low'"
       message="Status Child"
-      :on-reset="
-        () => {
-          console.log('Parent resetting count');
-          parentCount.value = 0;
-        }
-      "
     />
 
     <!-- Display current state -->
