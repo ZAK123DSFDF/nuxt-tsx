@@ -62,6 +62,7 @@ const StatusChild = () => {
       <input
         v-model="props.message"
         @input="handleMessageChange"
+        @change="() => console.log('input changed')"
         placeholder="Type to update child"
       />
     </div>
